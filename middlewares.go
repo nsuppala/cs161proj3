@@ -31,6 +31,7 @@ func UserAuth(next http.Handler) http.Handler {
 
 		// get the session token cookie
 		cookie, err := request.Cookie("session_token")
+		// empty assignment to suppress unused variable warning
 		_, _ = cookie, err
 
 		if err != nil {
@@ -57,7 +58,7 @@ func UserAuth(next http.Handler) http.Handler {
 		// hint: time.Unix, time.Now, and x.Before(y) may be useful here
 
 		// TODO: if the session token is valid, run the following line of code,
-		//       with username assigned to the appropriate value:
+		//       with username assigned to the username corresponding to the session token:
 		// request = request.WithContext(context.WithValue(request.Context(), userKey, username))
 
 		// TODO: if the session token is invalid, run the following line of code:

@@ -100,15 +100,17 @@ func processLogout(response http.ResponseWriter, request *http.Request) {
 	// empty assignment to suppress unused variable warning
 	_, _ = cookie, err
 
+	// get username of currently logged in user
+	username := getUsernameFromCtx(request)
+	// empty assignment to suppress unused variable warning
+	_ = username
+
 	//////////////////////////////////
 	// BEGIN TASK 2: YOUR CODE HERE
 	//////////////////////////////////
 
-	// optional: use this line to get the username of the current user
-	// username := getUsernameFromCtx(request)
-
 	// TODO: clear the session token cookie in the user's browser
-	// hint: to clear a cookie, set its MaxAge to -1
+	// HINT: to clear a cookie, set its MaxAge to -1
 
 	// TODO: delete the session from the database
 
@@ -122,14 +124,18 @@ func processLogout(response http.ResponseWriter, request *http.Request) {
 
 func processUpload(response http.ResponseWriter, request *http.Request, username string) {
 
+	//////////////////////////////////
 	// BEGIN TASK 3: YOUR CODE HERE
-	// you are recommended to use this (const filePath = "./files") as your base directory for file storage
-	// you can create sub directories too
+	//////////////////////////////////
+
+	// HINT: files should be stored in const filePath = "./files"
 
 	// replace this statement
 	fmt.Fprintf(response, "placeholder")
 
+	//////////////////////////////////
 	// END TASK 3: YOUR CODE HERE
+	//////////////////////////////////
 }
 
 // fileInfo helps you pass information to the template

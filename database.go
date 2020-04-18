@@ -43,7 +43,7 @@ func createTables() {
 	// do NOT modify the schema of the sessions or users tables.
 
 	// NOTE: You need to delete the test.db file after making changes to the SQL above.
-	// Otherwise your schema will not be applied.
+	// Otherwise your changes will not be applied.
 
 	////////////////////////////
 	// END: YOUR CODE HERE
