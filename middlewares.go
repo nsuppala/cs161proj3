@@ -1,6 +1,9 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -48,21 +51,37 @@ func UserAuth(next http.Handler) http.Handler {
 		// BEGIN TASK 1: YOUR CODE HERE
 		//////////////////////////////////
 
-		// TODO: look up the session token in the database
+		// look up the session token in the database
+		row := db.QueryRow("SELECT * FROM sessions WHERE token = ?", sessionToken)
 
-		// TODO: make sure the session token exists (i.e. your query returned something)
-
-		// TODO: assign the results of your query to some variables
-
-		// TODO: check that the session token has not expired
-		// hint: time.Unix, time.Now, and x.Before(y) may be useful here
-
-		// TODO: if the session token is valid, run the following line of code,
-		//       with username assigned to the username corresponding to the session token:
-		// request = request.WithContext(context.WithValue(request.Context(), userKey, username))
-
-		// TODO: if the session token is invalid, run the following line of code:
+		// make sure the session token exists (i.e. your query returned something)
+		// assign the results of your query to some variables
+		// if the session token is invalid, run the following line of code:
 		// next.ServeHTTP(w, request)
+		var username, token string
+		var expires int64
+		err = row.Scan(&username, &token, &expires)
+		if err == sql.ErrNoRows {
+			next.ServeHTTP(w, request)
+			fmt.Fprintf(w, "No match for session token")
+			return
+		} else if err != nil {
+			next.ServeHTTP(w, request)
+			fmt.Fprintf(w, err.Error())
+			return
+		}
+
+		// check that the session token has not expired
+		// hint: time.Unix, time.Now, and x.Before(y) may be useful here
+		if time.Unix(expires, 0).Before(time.Now()) {
+			next.ServeHTTP(w, request)
+			return
+		}
+
+		// if the session token is valid, run the following line of code,
+		// with username assigned to the username corresponding to the session token:
+		request = request.WithContext(context.WithValue(request.Context(), userKey, username))
+		return
 
 		//////////////////////////////////
 		// END TASK 1: YOUR CODE HERE
