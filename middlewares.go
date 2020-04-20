@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
@@ -59,21 +58,20 @@ func UserAuth(next http.Handler) http.Handler {
 		// if the session token is invalid, run the following line of code:
 		// next.ServeHTTP(w, request)
 		var username, token string
-		var expires int64
-		err = row.Scan(&username, &token, &expires)
-		if err == sql.ErrNoRows {
-			next.ServeHTTP(w, request)
-			fmt.Fprintf(w, "No match for session token")
-			return
-		} else if err != nil {
-			next.ServeHTTP(w, request)
+		var id, expires int64
+		err = row.Scan(&id, &username, &token, &expires)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, err.Error())
+			next.ServeHTTP(w, request)
 			return
 		}
 
 		// check that the session token has not expired
 		// hint: time.Unix, time.Now, and x.Before(y) may be useful here
 		if time.Unix(expires, 0).Before(time.Now()) {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "Session expired")
 			next.ServeHTTP(w, request)
 			return
 		}
@@ -81,6 +79,7 @@ func UserAuth(next http.Handler) http.Handler {
 		// if the session token is valid, run the following line of code,
 		// with username assigned to the username corresponding to the session token:
 		request = request.WithContext(context.WithValue(request.Context(), userKey, username))
+		next.ServeHTTP(w, request)
 		return
 
 		//////////////////////////////////
