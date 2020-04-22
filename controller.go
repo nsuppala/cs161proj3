@@ -7,9 +7,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	_ "io/ioutil"
 	"net/http"
 	_ "os"
+	"path/filepath"
 	_ "path/filepath"
 	"strings"
 	"text/template"
@@ -133,8 +135,34 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 
 	// HINT: files should be stored in const filePath = "./files"
 
-	// replace this statement
-	fmt.Fprintf(response, "placeholder")
+	// get file
+	file, header, err := request.FormFile("file")
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// extract file name and contents
+	filename := header.Filename
+	filecontents, err := ioutil.ReadAll(file)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+	}
+	filecontents = []byte(filecontents)
+
+	// create file path
+	filepath := filepath.Join("./files", username, filename)
+
+	// write file to disk
+	err = ioutil.WriteFile(filepath, filecontents, 0644)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// update files database
+	_, err = db.Exec("INSERT INTO files VALUES (?, ?, ?, ?)", username, username, filename, filepath)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+	}
 
 	//////////////////////////////////
 	// END TASK 3: YOUR CODE HERE
