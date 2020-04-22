@@ -61,8 +61,6 @@ func UserAuth(next http.Handler) http.Handler {
 		var id, expires int64
 		err = row.Scan(&id, &username, &token, &expires)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, err.Error())
 			next.ServeHTTP(w, request)
 			return
 		}
@@ -71,7 +69,7 @@ func UserAuth(next http.Handler) http.Handler {
 		// hint: time.Unix, time.Now, and x.Before(y) may be useful here
 		if time.Unix(expires, 0).Before(time.Now()) {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "Session expired")
+			fmt.Fprintf(w, "session expired")
 			next.ServeHTTP(w, request)
 			return
 		}

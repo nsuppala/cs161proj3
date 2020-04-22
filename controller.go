@@ -117,7 +117,10 @@ func processLogout(response http.ResponseWriter, request *http.Request) {
 	http.SetCookie(response, cookie)
 
 	// TODO: delete the session from the database
-	_, err = db.Query("DELETE FROM sessions WHERE username = ?", username)
+	_, err = db.Exec("DELETE FROM sessions WHERE username = ?", username)
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+	}
 
 	//////////////////////////////////
 	// END TASK 2: YOUR CODE HERE
@@ -134,11 +137,9 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	//////////////////////////////////
 
 	// HINT: files should be stored in const filePath = "./files"
-
 	// get file
 	file, header, err := request.FormFile("file")
 	if err != nil {
-		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
@@ -146,7 +147,6 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	filename := header.Filename
 	filecontents, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 	filecontents = []byte(filecontents)
@@ -157,16 +157,15 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	// write file to disk
 	err = ioutil.WriteFile(filepath, filecontents, 0644)
 	if err != nil {
-		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
 	// update files database table
-	_, err = db.Exec("INSERT INTO files VALUES (?, ?, ?, ?)", username, username, filename, filepath)
+	_, err = db.Exec("INSERT INTO files (owner, username, filename, filepath) VALUES (?, ?, ?, ?)", username, username, filename, filepath)
 	if err != nil {
-		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
+	fmt.Fprintf(response, "file uploaded")
 
 	//////////////////////////////////
 	// END TASK 3: YOUR CODE HERE
