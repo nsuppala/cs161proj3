@@ -138,6 +138,7 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	// get file
 	file, header, err := request.FormFile("file")
 	if err != nil {
+		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
@@ -145,22 +146,25 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	filename := header.Filename
 	filecontents, err := ioutil.ReadAll(file)
 	if err != nil {
+		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 	filecontents = []byte(filecontents)
 
 	// create file path
-	filepath := filepath.Join("./files", username, filename)
+	filepath := filepath.Join("./files", username+filename)
 
 	// write file to disk
 	err = ioutil.WriteFile(filepath, filecontents, 0644)
 	if err != nil {
+		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
-	// update files database
+	// update files database table
 	_, err = db.Exec("INSERT INTO files VALUES (?, ?, ?, ?)", username, username, filename, filepath)
 	if err != nil {
+		fmt.Fprint(response, err)
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
