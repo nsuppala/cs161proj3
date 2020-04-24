@@ -186,11 +186,25 @@ func listFiles(response http.ResponseWriter, request *http.Request, username str
 	// BEGIN TASK 4: YOUR CODE HERE
 	//////////////////////////////////
 
-	// TODO: for each of the user's files, add a
+	// for each of the user's files, add a
 	// corresponding fileInfo struct to the files slice.
+	rows, err := db.Query("SELECT owner, filename, filepath FROM files WHERE username = '?'", username)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-	// replace this line
-	fmt.Fprintf(response, "placeholder")
+	for rows.Next() {
+		var (
+			owner, filename, filepath string
+		)
+		err = rows.Scan(&owner, &filename, &filepath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		file := fileInfo{Filename: filename, FileOwner: owner, FilePath: filepath}
+		files = append(files, file)
+	}
 
 	//////////////////////////////////
 	// END TASK 4: YOUR CODE HERE
