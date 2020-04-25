@@ -37,9 +37,9 @@ func createTables() {
 							   expires INTEGER
 							   );
 		CREATE TABLE IF NOT EXISTS files (id INTEGER NOT NULL PRIMARY KEY,
-							owner TEXT
-							username TEXT
-							filename TEXT
+							owner TEXT,
+							username TEXT,
+							filename TEXT,
 							filepath TEXT
 							);`
 	// TODO: modify the schema of the files table to help implement tasks 3-6.
