@@ -152,7 +152,7 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	filecontents = []byte(filecontents)
 
 	// create file path
-	filepath := filepath.Join("./files", username+filename)
+	filepath := filepath.Join("./files", filename)
 
 	// write file to disk
 	err = ioutil.WriteFile(filepath, filecontents, 0644)
@@ -188,17 +188,19 @@ func listFiles(response http.ResponseWriter, request *http.Request, username str
 
 	// for each of the user's files, add a
 	// corresponding fileInfo struct to the files slice.
-	rows, err := db.Query("SELECT owner, filename, filepath FROM files WHERE username = '?'", username)
+	rows, err := db.Query("SELECT owner, filename, filepath FROM files WHERE username =?", username)
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
+
+	var (
+		owner, filename, filepath string
+	)
 
 	for rows.Next() {
-		var (
-			owner, filename, filepath string
-		)
 		err = rows.Scan(&owner, &filename, &filepath)
+
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -233,9 +235,39 @@ func getFile(response http.ResponseWriter, request *http.Request, username strin
 	//////////////////////////////////
 	// BEGIN TASK 5: YOUR CODE HERE
 	//////////////////////////////////
+	// check to see if user is allowed to download
+	rows, err := db.Query("SELECT filepath FROM files WHERE username =?", username)
 
-	// replace this line
-	fmt.Fprintf(response, "placeholder")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var filepath string
+	authorized := false
+
+	for rows.Next() {
+		err = rows.Scan(&filepath)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if filepath == fileString {
+			authorized = true
+			break
+		}
+	}
+
+	// Download file
+	if authorized {
+		setNameOfServedFile(response, fileString)
+		http.ServeFile(response, request, fileString)
+	} else {
+		response.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(response, "not authorized to download")
+		return
+	}
 
 	//////////////////////////////////
 	// END TASK 5: YOUR CODE HERE
@@ -261,8 +293,44 @@ func processShare(response http.ResponseWriter, request *http.Request, sender st
 	// BEGIN TASK 6: YOUR CODE HERE
 	//////////////////////////////////
 
-	// replace this line
-	fmt.Fprintf(response, "placeholder")
+	// check to see if the sender is allowed to send
+	rows, err := db.Query("SELECT filename, filepath FROM files WHERE owner =?", sender)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var (
+		file, filepath string
+	)
+	authorized := false
+
+	for rows.Next() {
+		err = rows.Scan(&file, &filepath)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if file == filename {
+			authorized = true
+		}
+	}
+
+	// update files database table
+	if authorized {
+		_, err := db.Exec("INSERT INTO files (owner, username, filename, filepath) VALUES (?, ?, ?, ?)", sender, recipient, filename, filepath)
+		if err != nil {
+			fmt.Fprintf(response, err.Error())
+			response.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(response, "file shared")
+	} else {
+		response.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(response, "not authorized to share file")
+		return
+	}
 
 	//////////////////////////////////
 	// END TASK 6: YOUR CODE HERE
