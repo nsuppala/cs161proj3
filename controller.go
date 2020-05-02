@@ -7,14 +7,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	_ "io/ioutil"
 	"net/http"
 	_ "os"
 	"path/filepath"
 	_ "path/filepath"
+	"regexp"
 	"strings"
-	"text/template"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -143,8 +144,15 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 		response.WriteHeader(http.StatusInternalServerError)
 	}
 
-	// extract file name and contents
+	// extract file name and veirfy
 	filename := header.Filename
+	matched, _ := regexp.MatchString("^(?:[[:alnum:]]|[.]){1,50}$", filename)
+	if !matched {
+		response.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(response, "invalid file name")
+	}
+
+	// extract file contents
 	filecontents, err := ioutil.ReadAll(file)
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
@@ -165,7 +173,7 @@ func processUpload(response http.ResponseWriter, request *http.Request, username
 	if err != nil {
 		response.WriteHeader(http.StatusInternalServerError)
 	}
-	fmt.Fprintf(response, "file uploaded")
+	http.Redirect(response, request, "/list", http.StatusFound)
 
 	//////////////////////////////////
 	// END TASK 3: YOUR CODE HERE
