@@ -244,7 +244,7 @@ func getFile(response http.ResponseWriter, request *http.Request, username strin
 	// BEGIN TASK 5: YOUR CODE HERE
 	//////////////////////////////////
 	// check to see if user is allowed to download
-	rows, err := db.Query("SELECT filepath FROM files WHERE username =?", username)
+	rows, err := db.Query("SELECT filepath, filename FROM files WHERE username =?", username)
 
 	if err != nil {
 		log.Fatal(err)
@@ -252,10 +252,11 @@ func getFile(response http.ResponseWriter, request *http.Request, username strin
 	defer rows.Close()
 
 	var filepath string
+	var filename string
 	authorized := false
 
 	for rows.Next() {
-		err = rows.Scan(&filepath)
+		err = rows.Scan(&filepath, &filename)
 
 		if err != nil {
 			log.Fatal(err)
@@ -269,7 +270,7 @@ func getFile(response http.ResponseWriter, request *http.Request, username strin
 
 	// Download file
 	if authorized {
-		setNameOfServedFile(response, fileString)
+		setNameOfServedFile(response, filename)
 		http.ServeFile(response, request, fileString)
 	} else {
 		response.WriteHeader(http.StatusBadRequest)
